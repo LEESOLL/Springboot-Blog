@@ -1,0 +1,68 @@
+package com.sparta.blog.service;
+
+import com.sparta.blog.dto.BlogRequestDto;
+import com.sparta.blog.dto.BlogResponseDto;
+import com.sparta.blog.dto.DeleteRequestDto;
+import com.sparta.blog.entity.Blog;
+import com.sparta.blog.repository.BlogRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+public class BlogService {
+
+    private final BlogRepository blogRepository;
+
+    @Transactional
+    public Blog createBlog(BlogRequestDto requestDto) {
+        Blog blog = new Blog(requestDto);
+        blogRepository.save(blog);
+        return blog;
+    }
+
+    @Transactional(readOnly = true)
+    public List<BlogResponseDto> getBlogs() {
+        List<Blog> list = blogRepository.findAllByOrderByModifiedAtDesc();
+        List<BlogResponseDto> responseDtoList = list.stream().map(x -> new BlogResponseDto(x.getAuthor(), x.getContents(), x.getTitle())).toList();
+//        List<BlogResponseDto> responseDtoList = new ArrayList<>();
+//        for(Blog blog : list) {
+//            BlogResponseDto blogResponseDto = new BlogResponseDto(blog.getAuthor(), blog.getContents(), blog.getTitle());
+//            responseDtoList.add(blogResponseDto);
+//        }
+        return responseDtoList;
+    }
+
+    @Transactional
+    public Long update(Long id, BlogRequestDto requestDto) {
+        Blog blog = blogRepository.findById(id).orElseThrow(
+                () -> new IllegalArgumentException("아이디가 존재하지 않습니다.")
+        );
+        blog.update(requestDto);
+        return blog.getId();
+    }
+
+    @Transactional
+    public String deleteBlog(Long id, String password) {
+        Blog blog = blogRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("찾는 게시물 없음!"));
+        if(password.equals(blog.getPassword())) {
+            blogRepository.deleteById(id);
+            return "삭제가 완료되었습니다.";
+        }
+        else {
+            throw new IllegalArgumentException("비밀번호 틀림!");
+        }
+    }
+
+    @Transactional
+    public BlogResponseDto getBlog(Long id) {
+        Blog blog = blogRepository.findById(id).orElseThrow(() -> new IllegalArgumentException());
+        BlogResponseDto blogResponseDto = new BlogResponseDto(blog.getAuthor(), blog.getContents(), blog.getTitle());
+        return blogResponseDto;
+    }
+}
+
