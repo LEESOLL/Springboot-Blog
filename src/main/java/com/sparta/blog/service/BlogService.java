@@ -25,7 +25,7 @@ public class BlogService {
         return blog;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true) //읽기 전용
     public List<BlogResponseDto> getBlogs() {
         List<Blog> list = blogRepository.findAllByOrderByModifiedAtDesc();
         List<BlogResponseDto> responseDtoList = list.stream().map(x -> new BlogResponseDto(x.getAuthor(), x.getContents(), x.getTitle())).toList();
